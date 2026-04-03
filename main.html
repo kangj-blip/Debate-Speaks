@@ -1,0 +1,77 @@
+<html>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial;
+      background: #111;
+      color: white;
+      padding: 20px;
+    }
+    h1 { color: #00ffcc; }
+    .card {
+      background: #1e1e1e;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>BP Speaks Tracker</h1>
+
+<div class="card">
+  <h2>Average Speaks: <span id="avg"></span></h2>
+</div>
+
+<canvas id="chart"></canvas>
+
+<div id="list"></div>
+
+<script>
+fetch('data/speaks.csv')
+  .then(res => res.text())
+  .then(csv => {
+
+    const rows = csv.trim().split('\n').slice(1); 
+
+    let total = 0;
+    let scores = [];
+    let labels = [];
+
+    rows.forEach(row => {
+      const [tournament, round, position, score] = row.split(',');
+      const speaker_score = parseFloat(score);
+
+      total += speaker_score;
+      scores.push(speaker_score);
+      labels.push(tournament + ' R' + round);
+
+      document.getElementById('list').innerHTML += `
+        <div class="card">
+          <b>${tournament}</b> - Round ${round}<br>
+          Position: ${position}<br>
+          Score: ${speaker_score}
+        </div>
+      `;
+    });
+
+    let avg = (total / rows.length).toFixed(2);
+    document.getElementById('avg').innerText = avg;
+
+    new Chart(document.getElementById('chart'), {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Speaks',
+          data: scores
+        }]
+      }
+    });
+
+  });
+</script>
+
+</body>
+</html>
