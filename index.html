@@ -1,77 +1,80 @@
 <html>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      font-family: Arial;
-      background: #111;
-      color: white;
-      padding: 20px;
-    }
-    h1 { color: #00ffcc; }
-    .card {
-      background: #1e1e1e;
-      padding: 15px;
-      margin: 10px 0;
-      border-radius: 10px;
-    }
-  </style>
-</head>
-<body>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial;
+            background: #111;
+            color: white;
+            padding: 20px;
+        }
 
-<h1>BP Speaks Tracker</h1>
+        h1 { color: #00ffcc; }
+        
+        .card {
+            background: #1e1e1e;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+        }
+    </style>
+    </head>
+    <body>
 
-<div class="card">
-  <h2>Average Speaks: <span id="avg"></span></h2>
-</div>
+    <h1>BP Speaks Tracker</h1>
 
-<canvas id="chart"></canvas>
+    <div class="card">
+    <h2>Average Speaks: <span id="avg"></span></h2>
+    </div>
 
-<div id="list"></div>
+    <canvas id="chart"></canvas>
 
-<script>
-fetch('data/speaks.csv')
-  .then(res => res.text())
-  .then(csv => {
+    <div id="list"></div>
 
-    const rows = csv.trim().split('\n').slice(1); 
+    <script>
+        fetch('data/speaks.csv')
+        .then(res => res.text())
+        .then(csv => {
 
-    let total = 0;
-    let scores = [];
-    let labels = [];
+            const rows = csv.trim().split('\n').slice(1); 
 
-    rows.forEach(row => {
-      const [tournament, round, position, score] = row.split(',');
-      const speaker_score = parseFloat(score);
+            let total = 0;
+            let scores = [];
+            let labels = [];
 
-      total += speaker_score;
-      scores.push(speaker_score);
-      labels.push(tournament + ' R' + round);
+            rows.forEach(row => {
+                const [tournament, round, position, score] = row.split(',');
+                const speaker_score = parseFloat(score);
 
-      document.getElementById('list').innerHTML += `
-        <div class="card">
-          <b>${tournament}</b> - Round ${round}<br>
-          Position: ${position}<br>
-          Score: ${speaker_score}
-        </div>
-      `;
-    });
+                total += speaker_score;
+                scores.push(speaker_score);
+                labels.push(tournament + ' R' + round);
 
-    let avg = (total / rows.length).toFixed(2);
-    document.getElementById('avg').innerText = avg;
+                document.getElementById('list').innerHTML += `
+                    <div class="card">
+                    <b>${tournament}</b> - Round ${round}<br>
+                    Position: ${position}<br>
+                    Score: ${speaker_score}
+                    </div>
+                `;
+            });
 
-    new Chart(document.getElementById('chart'), {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Speaks',
-          data: scores
-        }]
-      }
-    });
+            let avg = (total / rows.length).toFixed(2);
+            document.getElementById('avg').innerText = avg;
 
-  });
-</script>
+            new Chart(document.getElementById('chart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Speaks',
+                        data: scores
+                    }]
+                }
+            });
 
-</body>
+        });
+    </script>
+
+    </body>
 </html>
