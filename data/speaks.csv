@@ -1,6 +1,10 @@
-Tournament,Round,Position,Score
-CenNov 2025,1,OO,67
-CenNov 2025,2,CG,74
-CenNov 2025,3,CO,75
-CenNov 2025,4,OG,73
-
+tournament,round,position,speaker_position,score,rank
+CenNov 2025,1,OO,2nd,67,2
+CenNov 2025,2,OO,2nd,74,2
+CenNov 2025,3,OO,2nd,75,1
+CenNov 2025,4,OO,2nd,73,2
+Lord Dorch 2026,1,CG,1st,77,3
+Lord Dorch 2026,2,CO,1st,70,4
+Lord Dorch 2026,3,OO,1st,66,3
+Lord Dorch 2026,4,OG,1st,72,4
+Lord Dorch 2026,5,CG,1st,76,1
