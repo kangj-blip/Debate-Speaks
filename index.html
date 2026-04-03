@@ -1,27 +1,47 @@
+<!DOCTYPE html>
+
 <html>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      font-family: Arial;
-      background: #111;
-      color: white;
-      padding: 20px;
-    }
-    h1 { color: #00ffcc; }
-    .card {
-      background: #1e1e1e;
-      padding: 15px;
-      margin: 10px 0;
-      border-radius: 10px;
-    }
-  </style>
-</head>
+    <head>
+        <meta charset="UTF-8">
+        <title>BP Speak Tracker</title>
+        
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+        <style>
+            body {
+                font-family: Arial;
+                background: #111;
+                color: white;
+                padding: 20px;
+            }
+
+            h1 { color: #00ffcc; }
+
+            .card {
+                background: #1e1e1e;
+                padding: 15px;
+                margin: 10px 0;
+                border-radius: 10px;
+            }
+
+            button {
+                padding: 10px 15px;
+                background: #00ffcc;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                margin-bottom: 20px;
+            }
+        </style>
+    </head>
 <body>
 
-<h1>BP Speaks Tracker</h1>
+<h1>BP Speak Tracker</h1>
+
+<button id="toggleBtn">Switch to Tournament Averages</button>
 
 <div class="card">
-  <h2>Average Speaks: <span id="avg"></span></h2>
+<h2>Average Speaks: <span id="avg"></span></h2>
 </div>
 
 <canvas id="chart"></canvas>
@@ -29,48 +49,103 @@
 <div id="list"></div>
 
 <script>
-fetch('data/speaks.csv')
-  .then(res => res.text())
-  .then(csv => {
+    let grouped = false;
+    let originalData = [];
 
-    const rows = csv.trim().split('\n').slice(1); 
+    fetch('data/speaks.csv')
+    .then(res => res.text())
+    .then(csv => {
 
-    let total = 0;
-    let scores = [];
-    let labels = [];
+        const rows = csv.trim().split('\n').slice(1);
 
-    rows.forEach(row => {
-      const [tournament, round, position, score] = row.split(',');
-      const speaker_score = parseFloat(score);
+        originalData = rows.map(row => {
+            const [tournament, round, position, score] = row.split(',');
+            return {
+                tournament,
+                round: parseInt(round),
+                position,
+                speaker_score: parseFloat(score)
+            };
+        });
 
-      total += speaker_score;
-      scores.push(speaker_score);
-      labels.push(tournament + ' R' + round);
+        render();
 
-      document.getElementById('list').innerHTML += `
-        <div class="card">
-          <b>${tournament}</b> - Round ${round}<br>
-          Position: ${position}<br>
-          Score: ${speaker_score}
-        </div>
-      `;
+        document.getElementById('toggleBtn').onclick = () => {
+            grouped = !grouped;
+            document.getElementById('toggleBtn').innerText =
+                grouped ? "Switch to Round View" : "Switch to Tournament Averages";
+            render();
+        };
+
     });
 
-    let avg = (total / rows.length).toFixed(2);
-    document.getElementById('avg').innerText = avg;
+    function render() {
+        let data;
 
-    new Chart(document.getElementById('chart'), {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Speaks',
-          data: scores
-        }]
-      }
-    });
+        if (!grouped) {
+            data = originalData;
+        } else {
+            const groupedData = {};
 
-  });
+            originalData.forEach(d => {
+                if (!groupedData[d.tournament]) {
+                    groupedData[d.tournament] = [];
+                }
+                groupedData[d.tournament].push(d.speaker_score);
+            });
+
+            data = Object.keys(groupedData).map(tournament => {
+                const scores = groupedData[tournament];
+                const avg =
+                    scores.reduce((a, b) => a + b, 0) / scores.length;
+
+                return {
+                    tournament,
+                    round: "Avg",
+                    position: "-",
+                    speaker_score: avg
+                };
+            });
+        }
+
+        document.getElementById('list').innerHTML = "";
+
+        let total = 0;
+        let scores = [];
+        let labels = [];
+
+        data.forEach(d => {
+            total += d.speaker_score;
+            scores.push(d.speaker_score);
+            labels.push(d.tournament + ' ' + d.round);
+
+            document.getElementById('list').innerHTML += `
+                <div class="card">
+                    <b>${d.tournament}</b> - ${d.round}<br>
+                    Position: ${d.position}<br>
+                    Score: ${d.speaker_score.toFixed(2)}
+                </div>
+            `;
+        });
+
+        let avg = (total / data.length).toFixed(2);
+        document.getElementById('avg').innerText = avg;
+
+        if (window.chart) {
+            window.chart.destroy();
+        }
+
+        window.chart = new Chart(document.getElementById('chart'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: grouped ? 'Tournament Avg' : 'Speaks',
+                    data: scores
+                }]
+            }
+        });
+    }
 </script>
 
 </body>
