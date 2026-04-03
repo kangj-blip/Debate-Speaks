@@ -1,4 +1,192 @@
+<!DOCTYPE html>
 <html>
+<head>
+  <meta charset="UTF-8">
+  <title>BP Speak Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #111;
+      color: white;
+      padding: 20px;
+    }
+
+    h1 { color: #00ffcc; }
+
+    .card {
+      background: #1e1e1e;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 10px;
+    }
+
+    button {
+      padding: 10px 15px;
+      background: #00ffcc;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>BP Speak Tracker</h1>
+
+<button id="toggleTournament">Tournament Avg OFF</button>
+<button id="togglePosition">Position Avg OFF</button>
+
+<div class="card">
+  <h2>Average Speaks: <span id="avg"></span></h2>
+</div>
+
+<canvas id="chart"></canvas>
+
+<div id="list"></div>
+
+<script>
+let originalData = [];
+let tournamentMode = false;
+let positionMode = false;
+
+fetch('data/speaks.csv')
+  .then(res => res.text())
+  .then(csv => {
+
+    const rows = csv.trim().split('\n').slice(1);
+
+    originalData = rows.map(row => {
+      const [tournament, round, position, speaker_position, score, rank] = row.split(',');
+
+      return {
+        tournament,
+        round: parseInt(round),
+        position,
+        speaker_position,
+        score: parseFloat(score),
+        rank: parseInt(rank)
+      };
+    });
+
+    render();
+
+    document.getElementById('toggleTournament').onclick = () => {
+      tournamentMode = !tournamentMode;
+      document.getElementById('toggleTournament').innerText =
+        tournamentMode ? "Tournament Avg ON" : "Tournament Avg OFF";
+      render();
+    };
+
+    document.getElementById('togglePosition').onclick = () => {
+      positionMode = !positionMode;
+      document.getElementById('togglePosition').innerText =
+        positionMode ? "Position Avg ON" : "Position Avg OFF";
+      render();
+    };
+
+  });
+
+function render() {
+
+  let data = [...originalData];
+
+  // 🎯 TOURNAMENT GROUPING
+  if (tournamentMode) {
+    const grouped = {};
+
+    data.forEach(d => {
+      if (!grouped[d.tournament]) grouped[d.tournament] = [];
+      grouped[d.tournament].push(d.score);
+    });
+
+    data = Object.keys(grouped).map(t => {
+      const scores = grouped[t];
+      const avg = scores.reduce((a,b)=>a+b,0)/scores.length;
+
+      return {
+        label: t + " Avg",
+        score: avg,
+        extra: "-"
+      };
+    });
+  }
+
+  // 🎯 POSITION GROUPING
+  else if (positionMode) {
+    const grouped = {};
+
+    data.forEach(d => {
+      if (!grouped[d.position]) grouped[d.position] = [];
+      grouped[d.position].push(d.score);
+    });
+
+    data = Object.keys(grouped).map(p => {
+      const scores = grouped[p];
+      const avg = scores.reduce((a,b)=>a+b,0)/scores.length;
+
+      return {
+        label: p,
+        score: avg,
+        extra: "Position Avg"
+      };
+    });
+  }
+
+  // 🎯 NORMAL VIEW
+  else {
+    data = data.map(d => ({
+      label: d.tournament + " R" + d.round,
+      score: d.score,
+      extra: d.position + " | Rank: " + d.rank
+    }));
+  }
+
+  // CLEAR
+  document.getElementById('list').innerHTML = "";
+
+  let total = 0;
+  let scores = [];
+  let labels = [];
+
+  data.forEach(d => {
+    total += d.score;
+    scores.push(d.score);
+    labels.push(d.label);
+
+    document.getElementById('list').innerHTML += `
+      <div class="card">
+        <b>${d.label}</b><br>
+        ${d.extra}<br>
+        Score: ${d.score.toFixed(2)}
+      </div>
+    `;
+  });
+
+  let avg = (total / data.length).toFixed(2);
+  document.getElementById('avg').innerText = avg;
+
+  if (window.chart) window.chart.destroy();
+
+  window.chart = new Chart(document.getElementById('chart'), {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Speaks",
+        data: scores
+      }]
+    }
+  });
+}
+</script>
+
+</body>
+</html><html>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
